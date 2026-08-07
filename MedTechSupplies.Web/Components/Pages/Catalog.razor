@@ -1,0 +1,103 @@
+@page "/catalog"
+@inject CatalogService CatalogSvc
+@inject IJSRuntime JS
+
+<PageTitle>Catalog — MedTech Supplies</PageTitle>
+
+<div class="container">
+    <div class="breadcrumb"><a href="/">Home</a> / Catalog</div>
+    <div class="catalog">
+        <aside class="filters">
+            <h4>Categories</h4>
+            <div class="flist">
+                <a class="@(string.IsNullOrEmpty(_category) ? "active" : "")" @onclick='() => SetCategory("")'>
+                    All products <span>@_allCount</span>
+                </a>
+                @if (_categories is not null)
+                {
+                    @foreach (var c in _categories)
+                    {
+                        <a class="@(_category == c.Slug ? "active" : "")" @onclick="() => SetCategory(c.Slug)">
+                            <span class="flname"><Icon Name="@Icon.ForCategory(c.Slug)" /> @c.Name</span> <span>@c.Products.Count</span>
+                        </a>
+                    }
+                }
+            </div>
+        </aside>
+        <div>
+            <div class="catalog-head">
+                <h1>@_title</h1>
+                <div class="searchbar">
+                    <input class="input" placeholder="Search products..." style="width:210px"
+                           @bind="_search" @bind:event="oninput" @bind:after="Reload" />
+                    <select class="input" @bind="_sort" @bind:after="Reload">
+                        <option value="">Sort: Popular</option>
+                        <option value="name_asc">Name: A–Z</option>
+                        <option value="name_desc">Name: Z–A</option>
+                    </select>
+                </div>
+            </div>
+
+            @if (_products is null)
+            {
+                <p class="muted">Loading…</p>
+            }
+            else if (_products.Count == 0)
+            {
+                <div class="empty-state"><div class="big" style="color:var(--blue-dk)"><Icon Name="search" /></div><p>No products match your search.</p></div>
+            }
+            else
+            {
+                <div class="product-grid">
+                    @foreach (var p in _products)
+                    {
+                        <ProductCard Product="p" />
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromQuery] public string? Category { get; set; }
+
+    private List<Category>? _categories;
+    private List<Product>? _products;
+    private string _category = "";
+    private string _search = "";
+    private string _sort = "";
+    private int _allCount;
+    private string _title = "All products";
+
+    protected override async Task OnInitializedAsync()
+    {
+        _categories = await CatalogSvc.GetCategoriesAsync();
+        _allCount = _categories.Sum(c => c.Products.Count);
+        _category = Category ?? "";
+        await Reload();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // Re-arm scroll-reveal after products (re)render so cards animate in.
+        await JS.InvokeVoidAsync("medtech.initEngage");
+    }
+
+    private async Task SetCategory(string slug)
+    {
+        _category = slug;
+        await Reload();
+    }
+
+    private async Task Reload()
+    {
+        _products = await CatalogSvc.GetProductsAsync(
+            categorySlug: string.IsNullOrEmpty(_category) ? null : _category,
+            search: string.IsNullOrWhiteSpace(_search) ? null : _search,
+            sort: string.IsNullOrEmpty(_sort) ? null : _sort);
+
+        var cat = _categories?.FirstOrDefault(c => c.Slug == _category);
+        _title = cat?.Name ?? (string.IsNullOrWhiteSpace(_search) ? "All products" : $"Results for \"{_search}\"");
+    }
+}

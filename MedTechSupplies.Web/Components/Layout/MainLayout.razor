@@ -1,0 +1,20 @@
+@inherits LayoutComponentBase
+
+<div class="store-theme">
+    <div class="page-loader" id="pageLoader">
+        <div class="loader-stack">
+            <div class="spinner-wrap">
+                <div class="spinner"></div>
+                <span class="sp-core">✚</span>
+            </div>
+            <div class="pl-mark">MEDTECH <span>SUPPLIES</span></div>
+            <div class="pl-sub">Loading your supplies…</div>
+        </div>
+    </div>
+    <StoreHeader />
+    <main>
+        @Body
+    </main>
+    <StoreFooter />
+    <ChatWidget />
+</div>

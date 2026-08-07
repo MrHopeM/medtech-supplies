@@ -1,0 +1,88 @@
+@page "/enquiry-list"
+@implements IDisposable
+@inject CartState Basket
+
+<PageTitle>Your Enquiry — MedTech Supplies</PageTitle>
+
+<div class="container">
+    <div class="breadcrumb"><a href="/">Home</a> / Enquiry list</div>
+
+    @if (!_ready)
+    {
+        <p class="muted" style="padding:40px 0">Loading…</p>
+    }
+    else if (Basket.IsEmpty)
+    {
+        <div class="empty-state">
+            <div class="big" style="color:var(--blue-dk)"><Icon Name="clipboard" /></div>
+            <h2>Your enquiry list is empty</h2>
+            <p>Browse our catalog and add the products you'd like us to quote on.</p>
+            <a href="/catalog" class="btn btn-primary" style="margin-top:16px">Browse products</a>
+        </div>
+    }
+    else
+    {
+        <h1 style="font-size:27px;color:var(--navy);margin:8px 0 6px">Your enquiry list</h1>
+        <p class="muted" style="margin-bottom:20px">Add everything you're interested in — our team will reply with availability and pricing. No payment, no commitment.</p>
+        <div class="cart-layout">
+            <div class="cart-list">
+                @foreach (var item in Basket.Items)
+                {
+                    <div class="cart-row">
+                        <div class="ci-thumb">
+                            @if (!string.IsNullOrEmpty(item.Image) && (item.Image.StartsWith("http") || item.Image.StartsWith("/")))
+                            {
+                                <img src="@item.Image" alt="@item.Name" onerror="this.style.display='none'" />
+                            }
+                            else
+                            {
+                                <span style="color:var(--line)"><Icon Name="package" /></span>
+                            }
+                        </div>
+                        <div class="ci-main">
+                            <h4><a href="@($"/product/{item.Slug}")">@item.Name</a></h4>
+                            <div class="muted">Tap − / + to set the quantity you need</div>
+                        </div>
+                        <div class="qty-ctrl">
+                            <button @onclick="() => Change(item.ProductId, item.Quantity - 1)">−</button>
+                            <input type="number" min="1" value="@item.Quantity"
+                                   @onchange="e => Change(item.ProductId, Convert.ToInt32(e.Value))" />
+                            <button @onclick="() => Change(item.ProductId, item.Quantity + 1)">+</button>
+                        </div>
+                        <button class="btn btn-sm" style="background:#fde8e8;color:var(--danger)" @onclick="() => Remove(item.ProductId)">Remove</button>
+                    </div>
+                }
+            </div>
+            <aside class="summary">
+                <h3>Enquiry summary</h3>
+                <div class="line"><span>Products</span><span>@Basket.Items.Count</span></div>
+                <div class="line"><span>Total units</span><span>@Basket.Count</span></div>
+                <a href="/enquiry" class="btn btn-primary btn-block" style="margin-top:16px">Request a quote →</a>
+                <a href="/catalog" class="btn btn-light btn-block" style="margin-top:10px">Continue browsing</a>
+                <p class="muted" style="text-align:center;margin-top:12px;font-size:12.5px">We'll get back to you within one business day with pricing &amp; availability.</p>
+            </aside>
+        </div>
+    }
+</div>
+
+@code {
+    private bool _ready;
+
+    private void HandleChange() => InvokeAsync(StateHasChanged);
+    protected override void OnInitialized() => Basket.OnChange += HandleChange;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Basket.InitializeAsync();
+            _ready = true;
+            StateHasChanged();
+        }
+    }
+
+    private async Task Change(int id, int qty) => await Basket.SetQuantityAsync(id, qty);
+    private async Task Remove(int id) => await Basket.RemoveAsync(id);
+
+    public void Dispose() => Basket.OnChange -= HandleChange;
+}

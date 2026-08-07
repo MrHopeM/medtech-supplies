@@ -1,0 +1,31 @@
+@page "/admin/login"
+@layout EmptyLayout
+
+<PageTitle>Staff Login — MedTech Supplies</PageTitle>
+
+<div class="login-wrap">
+    <div class="login-card">
+        <img src="images/logo.svg" alt="MedTech Supplies" />
+        <p class="sub">Staff portal — sign in to manage inventory, orders and customers.</p>
+
+        @if (Error == "1")
+        {
+            <div class="login-err">Invalid username or password.</div>
+        }
+
+        <form method="post" action="/account/login" data-enhance="false">
+            <label>Username</label>
+            <input name="username" value="admin" autocomplete="username" required />
+            <label>Password</label>
+            <input name="password" type="password" autocomplete="current-password" required />
+            <button type="submit">Sign in →</button>
+        </form>
+
+        <div class="login-hint">Demo login → <b>admin</b> / <b>admin123</b></div>
+        <p style="text-align:center;margin-top:14px"><a href="/" style="color:var(--blue-dk);font-size:13.5px">← Back to storefront</a></p>
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromQuery] public string? Error { get; set; }
+}

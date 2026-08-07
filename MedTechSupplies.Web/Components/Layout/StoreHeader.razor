@@ -1,0 +1,86 @@
+@implements IDisposable
+@inject CartState Cart
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<div class="topbar">
+    <div class="container">
+        <span class="tb-contact"><Icon Name="phone" /> +27 67 618 5543 &nbsp;•&nbsp; <Icon Name="mail" /> enquire@medtechsupplies.co.za</span>
+        <span class="tb-right">
+            <a href="/catalog">Shop</a>
+            <a href="/#contact">Support</a>
+            <a href="/admin">Staff Login</a>
+        </span>
+    </div>
+</div>
+<header class="nav">
+    <div class="container">
+        <a href="/" aria-label="MedTech Supplies home">
+            <img src="images/logo.svg" alt="MedTech Supplies" class="logo-img" />
+        </a>
+        <nav class="menu">
+            <a href="/">Home</a>
+            <a href="/catalog">Catalog</a>
+            <a href="/#categories">Categories</a>
+            <a href="/#why">Why Us</a>
+            <a href="/#contact">Contact</a>
+        </nav>
+        <div class="nav-actions">
+            <a href="/catalog" class="btn btn-outline btn-sm browse-btn">Browse</a>
+            <a href="/enquiry-list" class="cart-btn" aria-label="Enquiry list" title="Your enquiry list">
+                <Icon Name="clipboard" />
+                @if (Cart.Count > 0)
+                {
+                    <span class="badge">@Cart.Count</span>
+                }
+            </a>
+            <button class="nav-toggle" @onclick="Toggle" aria-label="Menu">@(_open ? "✕" : "☰")</button>
+        </div>
+    </div>
+    @if (_open)
+    {
+        <nav class="mobile-menu">
+            <a href="/">Home</a>
+            <a href="/catalog">Catalog</a>
+            <a href="/#categories">Categories</a>
+            <a href="/#why">Why Us</a>
+            <a href="/#contact">Contact</a>
+            <a href="/admin">Staff Login</a>
+        </nav>
+    }
+</header>
+
+@code {
+    private bool _open;
+
+    private void HandleChange() => InvokeAsync(StateHasChanged);
+    private void Toggle() => _open = !_open;
+
+    protected override void OnInitialized()
+    {
+        Cart.OnChange += HandleChange;
+        Nav.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        if (_open)
+        {
+            _open = false;
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            await Cart.InitializeAsync();
+        await JS.InvokeVoidAsync("medtech.boot");
+    }
+
+    public void Dispose()
+    {
+        Cart.OnChange -= HandleChange;
+        Nav.LocationChanged -= OnLocationChanged;
+    }
+}

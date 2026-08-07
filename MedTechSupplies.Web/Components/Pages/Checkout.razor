@@ -1,0 +1,128 @@
+@page "/enquiry"
+@implements IDisposable
+@inject CartState Cart
+@inject EnquiryService Enquiries
+@inject NavigationManager Nav
+
+<PageTitle>Request a Quote — MedTech Supplies</PageTitle>
+
+<div class="container" style="padding:30px 24px 72px">
+    @if (_success)
+    {
+        <div class="card-panel" style="max-width:620px;margin:20px auto;text-align:center">
+            <div style="font-size:56px;color:var(--ok)"><Icon Name="check-circle" /></div>
+            <h1 style="color:var(--navy);margin:10px 0">Enquiry received — thank you!</h1>
+            <p class="muted">Thanks @_name, your enquiry has reached our team.</p>
+            <div style="background:var(--bg);border-radius:14px;padding:18px;margin:20px 0;text-align:left;font-size:14.5px">
+<span style="color:var(--blue-dk)"><Icon Name="mail" /></span> A confirmation has been sent to <strong>@_email</strong>, and our team has been notified.
+                We'll be in touch within one business day with availability and pricing.
+            </div>
+            <div style="display:flex;gap:12px;justify-content:center;margin-top:18px">
+                <a href="/catalog" class="btn btn-primary">Continue browsing</a>
+                <a href="/" class="btn btn-light">Back to home</a>
+            </div>
+        </div>
+    }
+    else if (!_ready)
+    {
+        <p class="muted" style="padding:40px 0">Loading…</p>
+    }
+    else if (Cart.IsEmpty)
+    {
+        <div class="empty-state">
+            <div class="big" style="color:var(--blue-dk)"><Icon Name="clipboard" /></div>
+            <h2>Your enquiry list is empty</h2>
+            <a href="/catalog" class="btn btn-primary" style="margin-top:16px">Browse products</a>
+        </div>
+    }
+    else
+    {
+        <div class="breadcrumb"><a href="/">Home</a> / <a href="/enquiry-list">Enquiry list</a> / Request a quote</div>
+        <h1 style="font-size:27px;color:var(--navy);margin:8px 0 20px">Request a quote</h1>
+        <div class="cart-layout">
+            <div class="card-panel">
+                <h3 style="color:var(--navy);margin-bottom:6px">Your details</h3>
+                <p class="muted" style="margin-bottom:16px">Tell us where to send your quote — no payment is taken on this site.</p>
+                <EditForm Model="_model" OnValidSubmit="Submit">
+                    <DataAnnotationsValidator />
+                    <div class="form-row">
+                        <div class="field"><label>Full name *</label><InputText class="input" style="width:100%" @bind-Value="_model.Name" /><ValidationMessage For="@(() => _model.Name)" /></div>
+                        <div class="field"><label>Company / facility</label><InputText class="input" style="width:100%" @bind-Value="_model.Company" /></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="field"><label>Email *</label><InputText class="input" style="width:100%" @bind-Value="_model.Email" /><ValidationMessage For="@(() => _model.Email)" /></div>
+                        <div class="field"><label>Phone</label><InputText class="input" style="width:100%" @bind-Value="_model.Phone" /></div>
+                    </div>
+                    <div class="field">
+                        <label>Facility type</label>
+                        <InputSelect class="input" style="width:100%" @bind-Value="_model.Type">
+                            <option>Hospital</option><option>Clinic</option><option>Pharmacy</option><option>Home Care</option><option>Other</option>
+                        </InputSelect>
+                    </div>
+                    <div class="field"><label>Notes (optional)</label><InputTextArea class="input" style="width:100%" @bind-Value="_model.Message" placeholder="Delivery location, timing, quantities, anything else we should know..." /></div>
+                    <button type="submit" class="btn btn-primary btn-block" disabled="@_submitting">
+                        @(_submitting ? "Sending…" : "Submit enquiry")
+                    </button>
+                    @if (_error is not null)
+                    {
+                        <p class="val-err" style="margin-top:10px">@_error</p>
+                    }
+                </EditForm>
+            </div>
+            <aside class="summary">
+                <h3>Items in your enquiry</h3>
+                @foreach (var item in Cart.Items)
+                {
+                    <div class="line"><span>@item.Name</span><span>×@item.Quantity</span></div>
+                }
+                <div class="total"><span>Products</span><span>@Cart.Items.Count</span></div>
+            </aside>
+        </div>
+    }
+</div>
+
+@code {
+    private EnquiryForm _model = new();
+    private bool _ready, _submitting, _success;
+    private string? _error;
+    private string _name = "", _email = "";
+
+    private void HandleChange() => InvokeAsync(StateHasChanged);
+    protected override void OnInitialized() => Cart.OnChange += HandleChange;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Cart.InitializeAsync();
+            _ready = true;
+            StateHasChanged();
+        }
+    }
+
+    private async Task Submit()
+    {
+        if (Cart.IsEmpty) return;
+        _submitting = true;
+        _error = null;
+        try
+        {
+            var snapshot = Cart.Items.ToList();
+            await Enquiries.SubmitAsync(_model, snapshot);
+            _name = _model.Name;
+            _email = _model.Email;
+            await Cart.ClearAsync();
+            _success = true;
+        }
+        catch (Exception)
+        {
+            _error = "Sorry, we couldn't send your enquiry. Please try again.";
+        }
+        finally
+        {
+            _submitting = false;
+        }
+    }
+
+    public void Dispose() => Cart.OnChange -= HandleChange;
+}

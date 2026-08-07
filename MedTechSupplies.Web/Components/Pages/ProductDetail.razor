@@ -1,0 +1,124 @@
+@page "/product/{Slug}"
+@inject CatalogService Catalog
+@inject CartState Cart
+@inject IJSRuntime JS
+
+<PageTitle>@(_product?.Name ?? "Product") — MedTech Supplies</PageTitle>
+
+<div class="container">
+    @if (_loading)
+    {
+        <p class="muted" style="padding:60px">Loading…</p>
+    }
+    else if (_product is null)
+    {
+        <div class="empty-state"><div class="big" style="color:var(--blue-dk)"><Icon Name="alert" /></div><h2>Product not found</h2><a href="/catalog" class="btn btn-primary" style="margin-top:14px">Back to catalog</a></div>
+    }
+    else
+    {
+        <div class="breadcrumb">
+            <a href="/">Home</a> /
+            <a href="@($"/catalog?category={_product.Category?.Slug}")">@_product.Category?.Name</a> /
+            @_product.Name
+        </div>
+        <div class="pd">
+            <div class="gallery">
+                @if (!string.IsNullOrEmpty(_product.Image) && (_product.Image.StartsWith("http") || _product.Image.StartsWith("/")))
+                {
+                    <img src="@_product.Image" alt="@_product.Name" onerror="this.style.display='none'" />
+                }
+                else
+                {
+                    <span style="color:var(--line)"><Icon Name="package" /></span>
+                }
+            </div>
+            <div class="info">
+                <span class="brand" style="color:var(--blue-dk);font-weight:700;text-transform:uppercase;letter-spacing:.5px;font-size:13px">@(_product.Brand ?? _product.Category?.Name) · SKU @_product.Sku</span>
+                <h1>@_product.Name</h1>
+                @if (_product.IsOutOfStock)
+                {
+                    <span class="stock-pill stock-low">Available to source — ask us</span>
+                }
+                else if (_product.IsLowStock)
+                {
+                    <span class="stock-pill stock-low">Limited stock — enquire soon</span>
+                }
+                else
+                {
+                    <span class="stock-pill stock-in">In stock &amp; ready to quote</span>
+                }
+                <p class="desc">@_product.Description</p>
+
+                <div style="background:var(--bg);border-radius:14px;padding:16px 18px;margin:18px 0;font-size:14.5px;color:var(--muted)">
+                    <span style="color:var(--blue-dk)"><Icon Name="lightbulb" /></span> <strong style="color:var(--navy)">No online prices.</strong> Add the items you need to an enquiry and our team will come back to you with the best available pricing and lead time.
+                </div>
+
+                <div style="display:flex;align-items:center;gap:14px;margin:18px 0">
+                    <span style="font-weight:600">Quantity</span>
+                    <div class="qty-ctrl">
+                        <button @onclick="() => Adjust(-1)">−</button>
+                        <input type="number" min="1" @bind="_qty" />
+                        <button @onclick="() => Adjust(1)">+</button>
+                    </div>
+                </div>
+
+                <div style="display:flex;gap:12px;flex-wrap:wrap">
+                    <button class="btn btn-primary" @onclick="AddToEnquiry">+ Add to enquiry</button>
+                    <a href="/enquiry-list" class="btn btn-outline">View enquiry list</a>
+                </div>
+
+                <div class="pd-points" style="margin-top:26px;display:grid;gap:12px;color:var(--muted);font-size:14.5px">
+                    <div><Icon Name="truck" /> Nationwide delivery once your order is confirmed</div>
+                    <div><Icon Name="clipboard" /> We source from trusted wholesalers and quote you directly</div>
+                    <div><Icon Name="shield-check" /> Quality-assured, compliant medical products</div>
+                </div>
+            </div>
+        </div>
+
+        @if (_related is { Count: > 0 })
+        {
+            <section class="block" style="padding-top:10px">
+                <h2 style="font-size:24px;color:var(--navy);margin-bottom:20px">Related products</h2>
+                <div class="product-grid">
+                    @foreach (var r in _related)
+                    {
+                        <ProductCard Product="r" />
+                    }
+                </div>
+            </section>
+        }
+    }
+</div>
+
+@code {
+    [Parameter] public string Slug { get; set; } = "";
+
+    private Product? _product;
+    private List<Product>? _related;
+    private bool _loading = true;
+    private int _qty = 1;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _product = await Catalog.GetBySlugAsync(Slug);
+        if (_product is not null)
+            _related = await Catalog.GetRelatedAsync(_product);
+        _qty = 1;
+        _loading = false;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await JS.InvokeVoidAsync("medtech.initEngage");
+    }
+
+    private void Adjust(int d) => _qty = Math.Max(1, _qty + d);
+
+    private async Task AddToEnquiry()
+    {
+        if (_product is null) return;
+        await Cart.AddAsync(_product, Math.Max(1, _qty));
+        await JS.InvokeVoidAsync("medtech.toast", $"{_qty} × {_product.Name} added to your enquiry", true);
+    }
+}

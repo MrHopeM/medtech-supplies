@@ -1,0 +1,253 @@
+@page "/"
+@inject CatalogService Catalog
+@inject EnquiryService Enquiries
+@inject IJSRuntime JS
+
+<PageTitle>MedTech Supplies — Medical Equipment Sourcing, South Africa</PageTitle>
+
+<section class="hero">
+    <canvas id="heroCanvas" class="hero-canvas"></canvas>
+    <span class="hero-glow g1" data-parallax="0.12"></span>
+    <span class="hero-glow g2" data-parallax="0.18"></span>
+    <div class="container">
+        <div>
+            <h1>The right medical supplies,<br /><span class="grad rot" id="heroRot" data-words="sourced.|delivered.|trusted.|made simple.">sourced.</span></h1>
+            <p class="lead">MedTech Supplies partners with trusted wholesalers to get hospitals, clinics and pharmacies across South Africa exactly what they need — at the right price. Tell us what you're after and we'll handle the rest.</p>
+            <div class="cta-row">
+                <a href="/catalog" class="btn btn-green">Browse the catalog →</a>
+                <a href="#contact" class="btn btn-ghost">Request a quote</a>
+            </div>
+            <div class="hero-stats">
+                <div class="stat"><b><span class="counter" data-target="28" data-suffix="+">0</span></b><span>Products in our range</span></div>
+                <div class="stat"><b>SAHPRA</b><span>Registered &amp; licensed</span></div>
+                <div class="stat"><b><span class="counter" data-target="24" data-suffix="hr">0</span></b><span>Typical response</span></div>
+            </div>
+        </div>
+        <div class="hero-card reveal">
+            <h4>Why facilities choose us</h4>
+            <div class="mini"><span class="ico"><Icon Name="search" /></span><div><b>We do the sourcing</b><br><span>Tap into our wholesaler network</span></div></div>
+            <div class="mini"><span class="ico"><Icon Name="message" /></span><div><b>One point of contact</b><br><span>A dedicated person on every enquiry</span></div></div>
+            <div class="mini"><span class="ico"><Icon Name="tag" /></span><div><b>Competitive pricing</b><br><span>We negotiate, you save</span></div></div>
+            <div class="mini"><span class="ico"><Icon Name="truck" /></span><div><b>Nationwide delivery</b><br><span>Reliable fulfilment, countrywide</span></div></div>
+        </div>
+    </div>
+</section>
+
+<div class="trust">
+    <div class="container">
+        <div class="item"><span class="ico"><Icon Name="shield-check" /></span> SAHPRA registered &amp; licensed</div>
+        <div class="item"><span class="ico"><Icon Name="users" /></span> Trusted wholesaler network</div>
+        <div class="item"><span class="ico"><Icon Name="message" /></span> A real person on every enquiry</div>
+        <div class="item"><span class="ico"><Icon Name="truck" /></span> Nationwide delivery</div>
+    </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section class="block" id="how">
+    <div class="container">
+        <div class="section-head reveal">
+            <div class="eyebrow">Simple &amp; transparent</div>
+            <h2>How it works</h2>
+            <p>No online checkout, no pressure — just a quick enquiry and a tailored quote.</p>
+        </div>
+        <div class="steps">
+            <div class="step reveal tilt"><div class="num">1</div><h3>Build your enquiry</h3><p>Browse the catalog and add the products you're interested in to your enquiry list — no prices, no commitment.</p><span class="arrow">→</span></div>
+            <div class="step reveal tilt"><div class="num">2</div><h3>We source &amp; quote</h3><p>Our team checks availability with our wholesalers and comes back to you with the best pricing and lead time.</p><span class="arrow">→</span></div>
+            <div class="step reveal tilt"><div class="num">3</div><h3>We deliver</h3><p>Approve the quote and we handle fulfilment and delivery to your facility, anywhere in South Africa.</p></div>
+        </div>
+    </div>
+</section>
+
+<!-- CATEGORIES -->
+<section class="block" id="categories" style="padding-top:0">
+    <div class="container">
+        <div class="section-head reveal">
+            <div class="eyebrow">Shop by category</div>
+            <h2>Everything your facility needs</h2>
+            <p>Browse our range across diagnostics, PPE, surgical, respiratory and more.</p>
+        </div>
+        @if (_categories is not null)
+        {
+            <div class="cat-grid">
+                @foreach (var c in _categories)
+                {
+                    <a class="cat-card reveal tilt" href="@($"/catalog?category={c.Slug}")">
+                        <div class="emoji"><Icon Name="@Icon.ForCategory(c.Slug)" /></div>
+                        <h3>@c.Name</h3>
+                        <span>@c.Products.Count product@(c.Products.Count == 1 ? "" : "s")</span>
+                    </a>
+                }
+            </div>
+        }
+    </div>
+</section>
+
+<!-- FEATURED -->
+<section class="block" style="padding-top:0" id="featured">
+    <div class="container">
+        <div class="section-head reveal">
+            <div class="eyebrow">Popular requests</div>
+            <h2>Frequently sourced</h2>
+            <p>Products our clients ask for again and again.</p>
+        </div>
+        @if (_featured is not null)
+        {
+            <div class="product-grid">
+                @foreach (var p in _featured)
+                {
+                    <ProductCard Product="p" />
+                }
+            </div>
+        }
+        <div style="text-align:center;margin-top:40px"><a href="/catalog" class="btn btn-primary">View all products →</a></div>
+    </div>
+</section>
+
+<!-- STATS BAND -->
+<section class="block" style="padding-top:0">
+    <div class="container">
+        <div class="stats-band reveal">
+            <div class="grid">
+                <div><span class="counter" data-target="28" data-suffix="+">0</span><div class="lbl">Products in our range</div></div>
+                <div><span class="counter" data-target="4">0</span><div class="lbl">Product categories</div></div>
+                <div><span class="counter" data-target="100" data-suffix="%">0</span><div class="lbl">Quality assured</div></div>
+                <div><span class="counter" data-target="24" data-suffix="/7">0</span><div class="lbl">Support</div></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="block" style="padding-top:0">
+    <div class="container">
+        <div class="section-head reveal">
+            <div class="eyebrow">What clients say</div>
+            <h2>Trusted by healthcare teams</h2>
+        </div>
+        <div class="tgrid">
+            <div class="tcard reveal tilt">
+                <div class="stars">★★★★★</div>
+                <p>"They take the hassle out of procurement. I send a list, they come back with great pricing and it's delivered within days."</p>
+                <div class="who"><div class="av">DN</div><div><b>Dr. Naidoo</b><span>Family Practice, Durban</span></div></div>
+            </div>
+            <div class="tcard reveal tilt">
+                <div class="stars">★★★★★</div>
+                <p>"Reliable supply and a team that actually answers the phone. MedTech has become our go-to for everything from PPE to monitors."</p>
+                <div class="who"><div class="av">SA</div><div><b>Sister Adams</b><span>St John Clinic, Cape Town</span></div></div>
+            </div>
+            <div class="tcard reveal tilt">
+                <div class="stars">★★★★★</div>
+                <p>"Competitive pricing because they know where to source. The enquiry process is quick and there's no pushy sales."</p>
+                <div class="who"><div class="av">TP</div><div><b>T. Pillay</b><span>Pillay Pharmacy, Sandton</span></div></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- PARTNER LOGOS -->
+<section class="block" style="padding-top:0">
+    <div class="container">
+        <div class="section-head reveal" style="margin-bottom:28px">
+            <div class="eyebrow">Sourced for</div>
+            <h2 style="font-size:26px">Hospitals, clinics &amp; pharmacies nationwide</h2>
+        </div>
+        <div class="logos reveal">
+            <div class="lg"><span class="d"><Icon Name="building" /></span> Hospitals</div>
+            <div class="lg"><span class="d"><Icon Name="activity" /></span> GP Practices</div>
+            <div class="lg"><span class="d"><Icon Name="cross" /></span> Pharmacies</div>
+            <div class="lg"><span class="d"><Icon Name="home" /></span> Home Care</div>
+            <div class="lg"><span class="d"><Icon Name="alert" /></span> Emergency Services</div>
+            <div class="lg"><span class="d"><Icon Name="flask" /></span> Laboratories</div>
+        </div>
+    </div>
+</section>
+
+<!-- WHY -->
+<section class="block" id="why">
+    <div class="container">
+        <div class="section-head reveal">
+            <div class="eyebrow">Why MedTech</div>
+            <h2>A sourcing partner you can rely on</h2>
+        </div>
+        <div class="cat-grid">
+            <div class="cat-card reveal tilt"><div class="emoji"><Icon Name="users" /></div><h3>We're the middleman that works for you</h3><span>We buy from wholesalers and pass on the value — you get one easy relationship.</span></div>
+            <div class="cat-card reveal tilt"><div class="emoji"><Icon Name="package" /></div><h3>Wide sourcing reach</h3><span>If we don't stock it, we can almost always source it for you.</span></div>
+            <div class="cat-card reveal tilt"><div class="emoji"><Icon Name="lightbulb" /></div><h3>Expert guidance</h3><span>Not sure what you need? We'll help you choose the right product.</span></div>
+            <div class="cat-card reveal tilt"><div class="emoji"><Icon Name="shield-check" /></div><h3>SAHPRA registered &amp; licensed</h3><span>We meet South Africa's medical product regulatory standards for safety and compliance.</span></div>
+        </div>
+    </div>
+</section>
+
+<!-- CONTACT / CTA -->
+<section class="block">
+    <div class="container">
+        <div class="cta-band reveal">
+            <h2>Tell us what you need</h2>
+            <p>Send us a quick message or build an enquiry list — our team will get back to you within one business day.</p>
+            <div class="contact-chips">
+                <a href="tel:+27676185543"><Icon Name="phone" /> +27 67 618 5543</a>
+                <a href="mailto:enquire@medtechsupplies.co.za"><Icon Name="mail" /> enquire@medtechsupplies.co.za</a>
+                <span><Icon Name="map-pin" /> 3 Halifax Street, Bryanston, Johannesburg</span>
+                <span><Icon Name="clock" /> Mon–Fri: 8AM – 6PM</span>
+            </div>
+            <div class="enquiry-glass">
+                @if (_sent)
+                {
+                    <div style="text-align:center;padding:20px">
+                        <div style="font-size:46px;color:var(--ok)"><Icon Name="check-circle" /></div>
+                        <h3 style="color:#fff;margin:8px 0">Message sent!</h3>
+                        <p class="muted">Thank you, @_contact.Name — our team will be in touch shortly.</p>
+                        <button class="btn btn-primary" style="margin-top:16px" @onclick="ResetContact">✕ &nbsp;Send another message</button>
+                    </div>
+                }
+                else
+                {
+                    <EditForm Model="_contact" OnValidSubmit="SubmitContact">
+                        <DataAnnotationsValidator />
+                        <div class="form-row">
+                            <div class="field"><label>Full name *</label><InputText class="input" style="width:100%" @bind-Value="_contact.Name" /><ValidationMessage For="@(() => _contact.Name)" /></div>
+                            <div class="field"><label>Company</label><InputText class="input" style="width:100%" @bind-Value="_contact.Company" /></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="field"><label>Email *</label><InputText class="input" style="width:100%" @bind-Value="_contact.Email" /><ValidationMessage For="@(() => _contact.Email)" /></div>
+                            <div class="field"><label>Phone</label><InputText class="input" style="width:100%" @bind-Value="_contact.Phone" /></div>
+                        </div>
+                        <div class="field"><label>What are you looking for?</label><InputTextArea class="input" style="width:100%" @bind-Value="_contact.Message" placeholder="Tell us the products and quantities you need..." /></div>
+                        <button type="submit" class="btn btn-primary btn-block">Send message</button>
+                    </EditForm>
+                }
+            </div>
+        </div>
+    </div>
+</section>
+
+@code {
+    private List<Category>? _categories;
+    private List<Product>? _featured;
+    private EnquiryForm _contact = new();
+    private bool _sent;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _categories = await Catalog.GetCategoriesAsync();
+        _featured = (await Catalog.GetProductsAsync(featuredOnly: true)).Take(8).ToList();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            await JS.InvokeVoidAsync("medtech.initEngage");
+    }
+
+    private async Task SubmitContact()
+    {
+        await Enquiries.CreateMessageAsync(_contact);
+        _sent = true;
+    }
+
+    private void ResetContact()
+    {
+        _sent = false;
+        _contact = new();
+    }
+}

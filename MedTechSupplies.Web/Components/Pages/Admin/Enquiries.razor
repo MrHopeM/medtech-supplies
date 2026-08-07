@@ -1,0 +1,144 @@
+@page "/admin"
+@layout AdminLayout
+@attribute [Authorize]
+@inject EnquiryService EnquirySvc
+@inject IJSRuntime JS
+
+<PageTitle>Enquiries — MedTech</PageTitle>
+
+<div class="toprow">
+    <h1>Enquiries</h1>
+    <div class="who">@(_open) open · @(_all?.Count ?? 0) total</div>
+</div>
+
+<div class="toolbar">
+    <input class="search" placeholder="Search by name, company or email..." @bind="_search" @bind:event="oninput" />
+</div>
+
+<div class="panel" style="padding:0;overflow:hidden">
+    <table>
+        <thead><tr><th>From</th><th>Subject</th><th>Items</th><th>Received</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+            @if (_all is null)
+            {
+                <tr><td colspan="6" class="muted" style="padding:20px">Loading…</td></tr>
+            }
+            else if (!Filtered().Any())
+            {
+                <tr><td colspan="6" class="muted" style="padding:20px">No enquiries yet.</td></tr>
+            }
+            else
+            {
+                @foreach (var e in Filtered())
+                {
+                    <tr style="cursor:pointer" @onclick="() => _detail = e">
+                        <td class="t-name">@e.Name<br /><span class="muted">@e.Company @(string.IsNullOrEmpty(e.Email) ? "" : "· " + e.Email)</span></td>
+                        <td>@e.Subject<br /><span class="muted">@Truncate(e.Message)</span></td>
+                        <td>@(e.Items.Count > 0 ? $"{e.Items.Count} item{(e.Items.Count == 1 ? "" : "s")}" : "—")</td>
+                        <td class="muted">@e.CreatedAt.ToLocalTime().ToString("dd MMM yyyy")</td>
+                        <td @onclick:stopPropagation="true">
+                            <select class="statussel" value="@e.Status" @onchange="ev => ChangeStatus(e, ev.Value?.ToString())">
+                                <option>New</option><option>Contacted</option><option>Quoted</option><option>Closed</option>
+                            </select>
+                        </td>
+                        <td @onclick:stopPropagation="true"><button class="btn btn-sm btn-primary" @onclick="() => _detail = e">Open</button></td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (_detail is not null)
+{
+    <div style="position:fixed;inset:0;background:rgba(16,58,90,.5);z-index:150" @onclick="() => _detail = null"></div>
+    <div style="position:fixed;top:0;right:0;height:100%;width:440px;max-width:92vw;background:#fff;z-index:151;overflow-y:auto;box-shadow:-10px 0 40px rgba(16,58,90,.2)">
+        <div style="padding:22px 24px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center">
+            <h3 style="color:var(--navy)">Enquiry</h3>
+            <button class="btn btn-sm btn-light" @onclick="() => _detail = null">Close</button>
+        </div>
+        <div style="padding:22px 24px">
+            <span class="badge @StatusClass(_detail.Status)">@_detail.Status</span>
+            <div class="panel" style="box-shadow:none;background:var(--bg);margin-top:16px">
+                <div style="font-weight:700;color:var(--navy)">@_detail.Name</div>
+                <div class="muted">@_detail.Company @(string.IsNullOrEmpty(_detail.Type) ? "" : "· " + _detail.Type)</div>
+                <div class="muted">@_detail.Email @(string.IsNullOrEmpty(_detail.Phone) ? "" : "· " + _detail.Phone)</div>
+            </div>
+
+            @if (_detail.Items.Count > 0)
+            {
+                <h4 style="margin:14px 0 8px;color:var(--navy)">Requested items</h4>
+                <table>
+                    <thead><tr><th>Item</th><th>Qty</th></tr></thead>
+                    <tbody>
+                        @foreach (var i in _detail.Items)
+                        {
+                            <tr><td>@i.Name</td><td>@i.Quantity</td></tr>
+                        }
+                    </tbody>
+                </table>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(_detail.Message))
+            {
+                <div class="panel" style="box-shadow:none;background:var(--bg);margin-top:14px"><strong>Message:</strong> @_detail.Message</div>
+            }
+
+            <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap">
+                @if (!string.IsNullOrEmpty(_detail.Email))
+                {
+                    <a class="btn btn-primary btn-sm" href="@($"mailto:{_detail.Email}?subject=Your MedTech Supplies enquiry")"><Icon Name="mail" /> Reply by email</a>
+                }
+                @if (!string.IsNullOrEmpty(_detail.Phone))
+                {
+                    <a class="btn btn-light btn-sm" href="@($"tel:{_detail.Phone}")"><Icon Name="phone" /> Call</a>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<Enquiry>? _all;
+    private Enquiry? _detail;
+    private string _search = "";
+    private int _open;
+
+    protected override async Task OnInitializedAsync() => await Load();
+
+    private async Task Load()
+    {
+        _all = await EnquirySvc.GetAllAsync();
+        _open = _all.Count(e => e.Status != "Closed");
+    }
+
+    private IEnumerable<Enquiry> Filtered()
+    {
+        if (_all is null) return Enumerable.Empty<Enquiry>();
+        if (string.IsNullOrWhiteSpace(_search)) return _all;
+        var s = _search.Trim().ToLowerInvariant();
+        return _all.Where(e => e.Name.ToLowerInvariant().Contains(s)
+            || (e.Company ?? "").ToLowerInvariant().Contains(s)
+            || (e.Email ?? "").ToLowerInvariant().Contains(s));
+    }
+
+    private async Task ChangeStatus(Enquiry e, string? status)
+    {
+        if (string.IsNullOrEmpty(status)) return;
+        await EnquirySvc.UpdateStatusAsync(e.Id, status);
+        e.Status = status;
+        _open = _all!.Count(x => x.Status != "Closed");
+        await JS.InvokeVoidAsync("medtech.toast", $"Marked {status}", true);
+    }
+
+    private static string Truncate(string? s) => string.IsNullOrEmpty(s) ? "" : (s.Length > 60 ? s[..58] + "…" : s);
+
+    private static string StatusClass(string status) => status switch
+    {
+        "New" => "b-amber",
+        "Contacted" => "b-blue",
+        "Quoted" => "b-purple",
+        "Closed" => "b-grey",
+        _ => "b-grey"
+    };
+}

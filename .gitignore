@@ -1,0 +1,22 @@
+# .NET
+bin/
+obj/
+*.user
+.vs/
+.idea/
+*.DotSettings.user
+
+# App data (SQLite db + dev email outbox)
+**/App_Data/
+
+# Legacy Node prototype (superseded by the Blazor solution)
+node_modules/
+data/
+package.json
+package-lock.json
+server.js
+public/
+src/db.js
+src/seed.js
+
+.DS_Store

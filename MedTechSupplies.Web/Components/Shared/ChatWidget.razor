@@ -1,0 +1,162 @@
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<div class="chat-root">
+    @if (_open)
+    {
+        <div class="chat-panel">
+            <div class="chat-head">
+                <div class="chat-ava"><span class="chat-pulse"></span>AI</div>
+                <div class="chat-id">
+                    <b>MedTech Assistant</b>
+                    <span><span class="dot-online"></span> Online · replies instantly</span>
+                </div>
+                <button class="chat-x" @onclick="Close" aria-label="Close">&times;</button>
+            </div>
+
+            <div class="chat-body" id="chatBody">
+                @foreach (var m in _msgs)
+                {
+                    <div class="chat-msg @(m.Bot ? "bot" : "me")">@((MarkupString)m.Text)</div>
+                }
+                @if (_typing)
+                {
+                    <div class="chat-msg bot typing"><span></span><span></span><span></span></div>
+                }
+                @if (_showChips && !_typing)
+                {
+                    <div class="chat-chips">
+                        <button @onclick='() => Pick("What do you supply?")'>What do you supply?</button>
+                        <button @onclick='() => Pick("How does pricing work?")'>How does pricing work?</button>
+                        <button @onclick='() => Pick("Talk to a person")'>Talk to a person</button>
+                    </div>
+                }
+            </div>
+
+            <form class="chat-input" @onsubmit="SendTyped" @onsubmit:preventDefault="true">
+                <input @bind="_draft" @bind:event="oninput" placeholder="Ask about products, pricing, delivery..." />
+                <button type="submit" aria-label="Send"><Icon Name="message" /></button>
+            </form>
+        </div>
+    }
+
+    <button class="chat-launch @(_open ? "open" : "")" @onclick="Toggle" aria-label="Chat with us">
+        @if (_open)
+        {
+            <span class="cl-icon">&times;</span>
+        }
+        else
+        {
+            <span class="cl-icon"><Icon Name="message" /></span>
+            <span class="cl-ping"></span>
+        }
+    </button>
+</div>
+
+@code {
+    private record ChatMsg(bool Bot, string Text);
+
+    private readonly List<ChatMsg> _msgs = new();
+    private bool _open, _typing, _greeted, _showChips;
+    private string _draft = "";
+
+    private void Toggle()
+    {
+        _open = !_open;
+        if (_open && !_greeted)
+        {
+            _greeted = true;
+            _ = Greet();
+        }
+    }
+
+    private void Close() => _open = false;
+
+    private async Task Greet()
+    {
+        await Bot("Hi there 👋 I'm the MedTech sourcing assistant. I can help you find products, explain how quoting works, or connect you to our team.");
+        _showChips = true;
+        await InvokeAsync(StateHasChanged);
+        await Scroll();
+    }
+
+    private async Task Pick(string text)
+    {
+        await SendUser(text);
+    }
+
+    private async Task SendTyped()
+    {
+        var t = _draft?.Trim();
+        if (string.IsNullOrEmpty(t)) return;
+        _draft = "";
+        await SendUser(t);
+    }
+
+    private async Task SendUser(string text)
+    {
+        _showChips = false;
+        _msgs.Add(new ChatMsg(false, System.Net.WebUtility.HtmlEncode(text)));
+        await InvokeAsync(StateHasChanged);
+        await Scroll();
+        await Respond(text);
+    }
+
+    private async Task Respond(string text)
+    {
+        var t = text.ToLowerInvariant();
+
+        if (t.Contains("price") || t.Contains("cost") || t.Contains("quote") || t.Contains("pricing"))
+        {
+            await Bot("We don't list prices online — as a sourcing partner we get you the best available price per order. Add what you need to an <b>enquiry</b> and our team sends a tailored quote within one business day.");
+            await BotAction("Browse products", "/catalog");
+        }
+        else if (t.Contains("deliver") || t.Contains("lead") || t.Contains("ship"))
+        {
+            await Bot("We deliver nationwide across South Africa once your order is confirmed. Lead times depend on the item — we'll confirm exact timing with your quote.");
+        }
+        else if (t.Contains("stock") || t.Contains("available") || t.Contains("availability"))
+        {
+            await Bot("Most items are in stock, and anything we don't hold we can usually source. Tell me what you're after, or browse the catalog and add items to an enquiry.");
+            await BotAction("Browse products", "/catalog");
+        }
+        else if (t.Contains("supply") || t.Contains("sell") || t.Contains("product") || t.Contains("what do"))
+        {
+            await Bot("We supply <b>medical devices, consumables, PPE and equipment</b> — 28+ products on the site and many more we can source: defibrillators, monitors, gloves, masks, hospital beds, oxygen and more.");
+            await BotAction("Browse the catalog", "/catalog");
+        }
+        else if (t.Contains("person") || t.Contains("human") || t.Contains("call") || t.Contains("talk") || t.Contains("contact"))
+        {
+            await Bot("Happy to connect you! 📞 <b>+27 67 618 5543</b><br>✉️ <b>enquire@medtechsupplies.co.za</b><br>Mon–Fri, 8AM–6PM. You can also drop your details and we'll call you back.");
+        }
+        else
+        {
+            await Bot("Got it — I've noted that. The quickest way forward is to add the items you're interested in to an enquiry and our team will follow up with pricing and availability.");
+            await BotAction("Start an enquiry", "/catalog");
+        }
+    }
+
+    private async Task Bot(string html)
+    {
+        _typing = true;
+        await InvokeAsync(StateHasChanged);
+        await Scroll();
+        await Task.Delay(Math.Min(1400, 500 + html.Length * 12));
+        _typing = false;
+        _msgs.Add(new ChatMsg(true, html));
+        await InvokeAsync(StateHasChanged);
+        await Scroll();
+    }
+
+    private async Task BotAction(string label, string href)
+    {
+        _msgs.Add(new ChatMsg(true, $"<a class='chat-cta' href='{href}'>{label} →</a>"));
+        await InvokeAsync(StateHasChanged);
+        await Scroll();
+    }
+
+    private async Task Scroll()
+    {
+        try { await JS.InvokeVoidAsync("medtech.chatScroll"); } catch { }
+    }
+}

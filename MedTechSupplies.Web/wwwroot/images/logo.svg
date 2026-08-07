@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 470 130" role="img" aria-label="MedTech Supplies">
+  <defs>
+    <style>
+      .blue{fill:#2BA9E0}.bluedk{fill:#1E88C7}.green{fill:#8CC63F}
+    </style>
+  </defs>
+
+  <!-- icon group -->
+  <g transform="translate(6,8)">
+    <!-- heart -->
+    <path class="blue" d="M55 30c-6-13-26-13-31 1-4 11 5 21 16 30l15 13 15-13c4-3 7-6 10-9-7 1-14-1-18-7-4-5-4-12-2-17-2-1-4-1-5-1-2 0-4 .4-5 1z"/>
+    <!-- ECG line across heart -->
+    <polyline points="20,42 30,42 35,30 41,54 47,42 72,42" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- stethoscope ear tubes -->
+    <path class="green" d="M40 74c0 16 13 29 29 29s29-13 29-29V58" fill="none" stroke="#8CC63F" stroke-width="6" stroke-linecap="round"/>
+    <path class="green" d="M40 74V58" fill="none" stroke="#8CC63F" stroke-width="6" stroke-linecap="round"/>
+    <!-- ear tips -->
+    <circle class="bluedk" cx="40" cy="55" r="5"/>
+    <circle class="bluedk" cx="98" cy="55" r="5"/>
+    <!-- chest piece -->
+    <circle class="green" cx="69" cy="106" r="11"/>
+    <circle cx="69" cy="106" r="5.5" fill="#fff"/>
+    <!-- plus signs -->
+    <g class="green">
+      <rect x="92" y="6" width="5" height="16" rx="1.5"/><rect x="86.5" y="11.5" width="16" height="5" rx="1.5"/>
+      <rect x="6" y="64" width="4.5" height="14" rx="1.5"/><rect x="1" y="69" width="14" height="4.5" rx="1.5"/>
+    </g>
+  </g>
+
+  <!-- wordmark -->
+  <text x="128" y="62" font-family="Inter, Arial, Helvetica, sans-serif" font-size="38" font-weight="800" fill="#2BA9E0" letter-spacing="0.5">MEDTECH</text>
+  <text x="130" y="91" font-family="Inter, Arial, Helvetica, sans-serif" font-size="21.5" font-weight="700" fill="#2BA9E0" letter-spacing="4.5">SUPPLIES</text>
+</svg>

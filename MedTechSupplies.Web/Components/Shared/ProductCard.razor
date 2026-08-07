@@ -1,0 +1,51 @@
+@inject CartState Cart
+@inject IJSRuntime JS
+
+<div class="product-card reveal tilt">
+    <a href="@($"/product/{Product.Slug}")" class="thumb">
+        @if (Product.Featured)
+        {
+            <span class="tag">Popular</span>
+        }
+        @if (IsImage(Product.Image))
+        {
+            <img src="@Product.Image" alt="@Product.Name" loading="lazy" onerror="this.style.display='none'" />
+        }
+        else
+        {
+            <span class="emoji-thumb" style="color:var(--line)"><Icon Name="package" /></span>
+        }
+    </a>
+    <div class="body">
+        <span class="brand">@(string.IsNullOrWhiteSpace(Product.Brand) ? Product.Category?.Name : Product.Brand)</span>
+        <h3><a href="@($"/product/{Product.Slug}")">@Product.Name</a></h3>
+        <div class="row">
+            @if (Product.IsOutOfStock)
+            {
+                <span class="stock-pill stock-low">Available to source</span>
+            }
+            else if (Product.IsLowStock)
+            {
+                <span class="stock-pill stock-low">Limited stock</span>
+            }
+            else
+            {
+                <span class="stock-pill stock-in">In stock</span>
+            }
+        </div>
+        <button class="btn btn-primary btn-sm btn-block enquiry-btn" @onclick="AddToEnquiry">+ Add to enquiry</button>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public Product Product { get; set; } = default!;
+
+    private static bool IsImage(string? s) =>
+        !string.IsNullOrEmpty(s) && (s.StartsWith("http") || s.StartsWith("/"));
+
+    private async Task AddToEnquiry()
+    {
+        await Cart.AddAsync(Product);
+        await JS.InvokeVoidAsync("medtech.toast", $"{Product.Name} added to your enquiry", true);
+    }
+}
