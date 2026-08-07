@@ -12,11 +12,11 @@ Enquiry-first (no online prices), built on the .NET stack, and designed to stand
 ![Azure](https://img.shields.io/badge/Azure-App%20Service%20ready-0078D4?logo=microsoftazure&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
-### ▶ [View the live site — medtechsupplies.runasp.net](http://medtechsupplies.runasp.net)
+### ▶ [View the live site — medtechsupplies.runasp.net](https://medtechsupplies.runasp.net)
 
 👤 **Author:** [Hope Mphulwane](https://www.linkedin.com/in/hope-mphulwane-0a5943b0/)
 
-> The live demo is currently served over **http** while the host provisions an SSL certificate — if your browser forces https and shows a connection error, try the `http://` address directly. First load cold-starts (~20s) on the free tier.
+> First load cold-starts (~20s) on the free hosting tier, then it's fast.
 
 </div>
 
